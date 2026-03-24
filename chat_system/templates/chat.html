@@ -71,8 +71,94 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+function copyText(text, button) {
+  navigator.clipboard.writeText(text).then(() => {
+    const oldText = button.textContent;
+    button.textContent = '已复制';
+    button.classList.add('copied');
+    setTimeout(() => {
+      button.textContent = oldText;
+      button.classList.remove('copied');
+    }, 1200);
+  }).catch(() => {
+    const oldText = button.textContent;
+    button.textContent = '复制失败';
+    setTimeout(() => {
+      button.textContent = oldText;
+    }, 1200);
+  });
+}
+
+function tableToText(table) {
+  const rows = [];
+  for (const tr of table.querySelectorAll('tr')) {
+    const cols = [];
+    for (const cell of tr.querySelectorAll('th, td')) {
+      cols.push(cell.innerText.replace(/\n+/g, ' ').trim());
+    }
+    rows.push(cols.join('\t'));
+  }
+  return rows.join('\n');
+}
+
+function addCopyButtons(container) {
+  if (!container) return;
+
+  // 给代码块加复制按钮
+  container.querySelectorAll('pre').forEach(pre => {
+    if (pre.parentElement && pre.parentElement.classList.contains('code-block-wrap')) {
+      return;
+    }
+
+    const code = pre.querySelector('code');
+    const codeText = code ? code.innerText : pre.innerText;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'code-block-wrap';
+
+    const toolbar = document.createElement('div');
+    toolbar.className = 'copy-toolbar';
+
+    const btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.textContent = '复制代码';
+    btn.onclick = () => copyText(codeText, btn);
+
+    toolbar.appendChild(btn);
+
+    pre.parentNode.insertBefore(wrapper, pre);
+    wrapper.appendChild(toolbar);
+    wrapper.appendChild(pre);
+  });
+
+  // 给表格加复制按钮
+  container.querySelectorAll('table').forEach(table => {
+    if (table.parentElement && table.parentElement.classList.contains('table-wrap')) {
+      return;
+    }
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'table-wrap';
+
+    const toolbar = document.createElement('div');
+    toolbar.className = 'copy-toolbar';
+
+    const btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.textContent = '复制表格';
+    btn.onclick = () => copyText(tableToText(table), btn);
+
+    toolbar.appendChild(btn);
+
+    table.parentNode.insertBefore(wrapper, table);
+    wrapper.appendChild(toolbar);
+    wrapper.appendChild(table);
+  });
+}
+
 function renderMarkdownContent(el, text) {
   el.innerHTML = marked.parse(text || '');
+  addCopyButtons(el);
 }
 
 function initAssistantMarkdown() {
