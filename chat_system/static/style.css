@@ -1,26 +1,394 @@
-body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f6f7fb; }
-.layout { display: grid; grid-template-columns: 280px 1fr; height: 100vh; }
-.sidebar { background: #141b2d; color: #fff; padding: 16px; overflow:auto; }
-.sidebar a { color: #b8d0ff; text-decoration: none; }
-.user-box { margin-bottom: 16px; display:flex; flex-direction:column; }
-#new-conv { width:100%; margin-bottom:12px; padding:10px; border-radius:8px; border:0; background:#4f7cff; color:#fff; }
-.model-entry, .placeholder { margin: 10px 0; font-size: 12px; opacity: .9; }
-.conv-list { list-style: none; padding: 0; }
-.conv-list li { margin-bottom: 6px; }
-.conv-list li.active a { font-weight: bold; color: #fff; }
-main { display:flex; flex-direction:column; height:100vh; }
-.messages { flex:1; overflow:auto; padding: 20px; }
-.msg { background:#fff; border-radius:10px; padding:12px; margin-bottom:12px; box-shadow: 0 2px 8px rgba(0,0,0,.05); }
-.msg.user { border-left:4px solid #4f7cff; }
-.msg.assistant { border-left:4px solid #20b26b; }
-.meta { font-size:12px; color:#6b7280; margin-bottom:8px; }
-pre { margin:0; white-space:pre-wrap; word-break:break-word; }
-.actions button { margin-top:8px; margin-right:8px; }
-.input-box { border-top:1px solid #ddd; padding: 12px; display:flex; gap:8px; background:#fff; }
-textarea { flex:1; height:88px; resize:none; border:1px solid #d1d5db; border-radius:8px; padding:10px; }
-#send { width:120px; border:none; border-radius:8px; background:#111827; color:#fff; }
-.auth-body { display:flex; justify-content:center; align-items:center; min-height:100vh; }
-.auth-card { background:#fff; padding:24px; border-radius:12px; width:320px; box-shadow:0 6px 20px rgba(0,0,0,.08); }
-.auth-card label { display:block; margin:10px 0; }
-.auth-card input { width:100%; padding:8px; }
-.error { color:#b91c1c; }
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f6f7fb;
+    color: #111827;
+}
+
+.layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    height: 100vh;
+}
+
+.sidebar {
+    background: #141b2d;
+    color: #fff;
+    padding: 16px;
+    overflow: auto;
+    border-right: 1px solid rgba(255,255,255,0.06);
+}
+
+.sidebar a {
+    color: #b8d0ff;
+    text-decoration: none;
+}
+
+.user-box {
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+#new-conv {
+    width: 100%;
+    margin-bottom: 12px;
+    padding: 11px;
+    border-radius: 10px;
+    border: 0;
+    background: #4f7cff;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+#new-conv:hover {
+    background: #3f6ef5;
+}
+
+.model-entry,
+.placeholder {
+    margin: 12px 0;
+    font-size: 12px;
+    opacity: .92;
+}
+
+.model-entry p {
+    margin: 0 0 6px;
+}
+
+#model-name {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #334155;
+    background: #fff;
+    color: #111827;
+}
+
+.conv-list {
+    list-style: none;
+    padding: 0;
+    margin: 18px 0;
+}
+
+.conv-list li {
+    margin-bottom: 6px;
+}
+
+.conv-list li a {
+    display: block;
+    padding: 10px 12px;
+    border-radius: 10px;
+    transition: all .15s ease;
+}
+
+.conv-list li a:hover {
+    background: rgba(255,255,255,0.08);
+}
+
+.conv-list li.active a {
+    font-weight: bold;
+    color: #fff;
+    background: rgba(79,124,255,0.18);
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: #f8fafc;
+}
+
+.messages {
+    flex: 1;
+    overflow: auto;
+    padding: 24px;
+}
+
+.msg {
+    background: #fff;
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 10px rgba(15,23,42,.06);
+}
+
+.msg.user {
+    border-left: 4px solid #4f7cff;
+    background: #f8fbff;
+}
+
+.msg.assistant {
+    border-left: 4px solid #22c55e;
+    background: #ffffff;
+}
+
+.meta {
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 10px;
+}
+
+.user-content {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    line-height: 1.7;
+    font-size: 15px;
+}
+
+.actions {
+    margin-top: 10px;
+}
+
+.actions button {
+    margin-top: 4px;
+    margin-right: 8px;
+    border: 1px solid #d1d5db;
+    background: #fff;
+    color: #111827;
+    border-radius: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+}
+
+.actions button:hover {
+    background: #f3f4f6;
+}
+
+/* 输入区域 */
+.input-box {
+    border-top: 1px solid #e5e7eb;
+    padding: 14px;
+    display: flex;
+    gap: 10px;
+    background: #fff;
+}
+
+textarea {
+    flex: 1;
+    height: 88px;
+    resize: none;
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 15px;
+    line-height: 1.6;
+    outline: none;
+}
+
+textarea:focus {
+    border-color: #4f7cff;
+    box-shadow: 0 0 0 3px rgba(79,124,255,.12);
+}
+
+#send {
+    width: 120px;
+    border: none;
+    border-radius: 12px;
+    background: #111827;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+#send:hover {
+    background: #0b1220;
+}
+
+/* Markdown 展示区 */
+.markdown-body {
+    line-height: 1.85;
+    font-size: 15px;
+    color: #1f2937;
+    word-break: break-word;
+}
+
+.markdown-body > *:first-child {
+    margin-top: 0;
+}
+
+.markdown-body > *:last-child {
+    margin-bottom: 0;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4 {
+    margin-top: 1.1em;
+    margin-bottom: 0.55em;
+    font-weight: 700;
+    line-height: 1.4;
+    color: #111827;
+}
+
+.markdown-body h1 {
+    font-size: 1.6em;
+}
+
+.markdown-body h2 {
+    font-size: 1.35em;
+}
+
+.markdown-body h3 {
+    font-size: 1.15em;
+}
+
+.markdown-body p {
+    margin: 0.65em 0;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+    margin: 0.65em 0;
+    padding-left: 1.5em;
+}
+
+.markdown-body li {
+    margin: 0.3em 0;
+}
+
+.markdown-body blockquote {
+    margin: 12px 0;
+    padding: 10px 14px;
+    border-left: 4px solid #93c5fd;
+    background: #eff6ff;
+    color: #1e3a8a;
+    border-radius: 8px;
+}
+
+.markdown-body hr {
+    border: none;
+    border-top: 1px solid #e5e7eb;
+    margin: 18px 0;
+}
+
+.markdown-body table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    overflow: hidden;
+    border-radius: 10px;
+    font-size: 14px;
+}
+
+.markdown-body th,
+.markdown-body td {
+    border: 1px solid #e5e7eb;
+    padding: 10px 12px;
+    text-align: left;
+}
+
+.markdown-body th {
+    background: #f3f4f6;
+    font-weight: 600;
+}
+
+.markdown-body code {
+    background: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-family: Consolas, Monaco, monospace;
+    font-size: 0.92em;
+}
+
+.markdown-body pre {
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 14px 16px;
+    border-radius: 12px;
+    overflow-x: auto;
+    margin: 14px 0;
+    line-height: 1.6;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+}
+
+.markdown-body pre code {
+    background: transparent;
+    padding: 0;
+    color: inherit;
+    font-size: 0.95em;
+}
+
+.markdown-body a {
+    color: #2563eb;
+    text-decoration: none;
+}
+
+.markdown-body a:hover {
+    text-decoration: underline;
+}
+
+/* 登录/注册页 */
+.auth-body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.auth-card {
+    background: #fff;
+    padding: 24px;
+    border-radius: 12px;
+    width: 320px;
+    box-shadow: 0 6px 20px rgba(0,0,0,.08);
+}
+
+.auth-card label {
+    display: block;
+    margin: 10px 0;
+}
+
+.auth-card input {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+.error {
+    color: #b91c1c;
+}
+
+/* 代码块 / 表格复制按钮 */
+.code-block-wrap,
+.table-wrap {
+    position: relative;
+    margin: 14px 0;
+}
+
+.copy-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 6px;
+}
+
+.copy-btn {
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    color: #111827;
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all .15s ease;
+}
+
+.copy-btn:hover {
+    background: #f3f4f6;
+}
+
+.copy-btn.copied {
+    background: #dcfce7;
+    border-color: #86efac;
+    color: #166534;
+}
+
+/* 让代码块和表格与工具栏搭配更自然 */
+.table-wrap table,
+.code-block-wrap pre {
+    margin-top: 0;
+}
