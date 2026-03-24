@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>智能对话系统</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
   <div class="layout">
@@ -22,10 +23,7 @@
           <option value="mock">mock（本地演示）</option>
         </select>
       </div>
-
-      <div class="placeholder">向量数据库入口（预留）</div>
-      <div class="placeholder">复杂缓存入口（预留）</div>
-
+      
       <ul class="conv-list">
         {% for c in conversations %}
         <li class="{% if c.id == current_id %}active{% endif %}">
@@ -42,7 +40,13 @@
         {% for m in messages %}
           <div class="msg {{ m.role }}" data-id="{{ m.id }}">
             <div class="meta">{{ m.role }} · {{ m.created_at }}</div>
-            <pre>{{ m.content }}</pre>
+
+            {% if m.role == 'assistant' %}
+              <div class="assistant-content markdown-body" data-content="{{ m.content | e }}"></div>
+            {% else %}
+              <pre class="user-content">{{ m.content }}</pre>
+            {% endif %}
+
             <div class="actions">
               <button onclick="editMessage({{ m.id }})">编辑</button>
               <button onclick="deleteMessage({{ m.id }})">删除</button>
@@ -60,6 +64,23 @@
 
 <script>
 const currentId = {{ current_id or 'null' }};
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function renderMarkdownContent(el, text) {
+  el.innerHTML = marked.parse(text || '');
+}
+
+function initAssistantMarkdown() {
+  document.querySelectorAll('.assistant-content').forEach(el => {
+    const raw = el.getAttribute('data-content') || '';
+    renderMarkdownContent(el, raw);
+  });
+}
 
 document.getElementById('new-conv').onclick = async () => {
   const modelName = document.getElementById('model-name').value;
@@ -94,17 +115,29 @@ document.getElementById('send').onclick = async () => {
   if (!content) return;
 
   const box = document.getElementById('messages');
+
   box.insertAdjacentHTML(
     'beforeend',
-    `<div class="msg user"><div class="meta">user</div><pre>${content}</pre></div>`
+    `
+    <div class="msg user">
+      <div class="meta">user</div>
+      <pre class="user-content">${escapeHtml(content)}</pre>
+    </div>
+    `
   );
 
   const assistantNode = document.createElement('div');
   assistantNode.className = 'msg assistant';
-  assistantNode.innerHTML = `<div class="meta">assistant(流式)</div><pre></pre>`;
+  assistantNode.innerHTML = `
+    <div class="meta">assistant · 正在生成</div>
+    <div class="assistant-content markdown-body"></div>
+  `;
   box.appendChild(assistantNode);
   box.scrollTop = box.scrollHeight;
   textEl.value = '';
+
+  const assistantContentEl = assistantNode.querySelector('.assistant-content');
+  const assistantMetaEl = assistantNode.querySelector('.meta');
 
   const resp = await fetch(`/api/conversations/${currentId}/messages`, {
     method: 'POST',
@@ -113,13 +146,15 @@ document.getElementById('send').onclick = async () => {
   });
 
   if (!resp.ok) {
-    assistantNode.querySelector('pre').textContent = `请求失败，状态码：${resp.status}`;
+    assistantContentEl.textContent = `请求失败，状态码：${resp.status}`;
+    assistantMetaEl.textContent = 'assistant · 请求失败';
     return;
   }
 
   const reader = resp.body.getReader();
   const decoder = new TextDecoder();
   let buf = '';
+  let fullText = '';
 
   while (true) {
     const {value, done} = await reader.read();
@@ -135,11 +170,19 @@ document.getElementById('send').onclick = async () => {
       const payload = JSON.parse(ev.slice(6));
 
       if (payload.delta) {
-        assistantNode.querySelector('pre').textContent += payload.delta;
+        fullText += payload.delta;
+        renderMarkdownContent(assistantContentEl, fullText);
+        box.scrollTop = box.scrollHeight;
       }
 
       if (payload.error) {
-        assistantNode.querySelector('pre').textContent += `\n[错误] ${payload.error}`;
+        fullText += `\n\n> [错误] ${payload.error}`;
+        renderMarkdownContent(assistantContentEl, fullText);
+        assistantMetaEl.textContent = 'assistant · 出错';
+      }
+
+      if (payload.done) {
+        assistantMetaEl.textContent = 'assistant';
       }
     }
   }
@@ -166,6 +209,8 @@ async function deleteMessage(id) {
   await fetch(`/api/messages/${id}`, {method: 'DELETE'});
   location.reload();
 }
+
+initAssistantMarkdown();
 </script>
 </body>
 </html>
