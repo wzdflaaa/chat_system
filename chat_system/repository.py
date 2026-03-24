@@ -12,11 +12,11 @@ class ChatRepository:
     def __init__(self) -> None:
         self.db = get_db()
 
-    def create_user(self, username: str, password_hash: str, role: str = 'user') -> int:
+    def create_user(self, username: str, password_hash: str, role: str = "user") -> int:
         conn = self.db.get_conn()
         try:
             cur = conn.execute(
-                'INSERT INTO users(username, password_hash, role) VALUES (?, ?, ?)',
+                "INSERT INTO users(username, password_hash, role) VALUES (?, ?, ?)",
                 (username, password_hash, role),
             )
             conn.commit()
@@ -27,16 +27,19 @@ class ChatRepository:
     def get_user_by_username(self, username: str) -> dict[str, Any] | None:
         conn = self.db.get_conn()
         try:
-            row = conn.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
+            row = conn.execute(
+                "SELECT * FROM users WHERE username = ?",
+                (username,),
+            ).fetchone()
             return dict(row) if row else None
         finally:
             conn.close()
 
-    def create_conversation(self, user_id: int, title: str, model_name: str = 'mock') -> int:
+    def create_conversation(self, user_id: int, title: str, model_name: str = "deepseek") -> int:
         conn = self.db.get_conn()
         try:
             cur = conn.execute(
-                'INSERT INTO conversations(user_id, title, model_name) VALUES (?, ?, ?)',
+                "INSERT INTO conversations(user_id, title, model_name) VALUES (?, ?, ?)",
                 (user_id, title, model_name),
             )
             conn.commit()
@@ -48,7 +51,7 @@ class ChatRepository:
         conn = self.db.get_conn()
         try:
             rows = conn.execute(
-                'SELECT * FROM conversations WHERE user_id = ? ORDER BY updated_at DESC, id DESC',
+                "SELECT * FROM conversations WHERE user_id = ? ORDER BY updated_at DESC, id DESC",
                 (user_id,),
             ).fetchall()
             return [dict(r) for r in rows]
@@ -58,8 +61,42 @@ class ChatRepository:
     def get_conversation(self, conversation_id: int) -> dict[str, Any] | None:
         conn = self.db.get_conn()
         try:
-            row = conn.execute('SELECT * FROM conversations WHERE id = ?', (conversation_id,)).fetchone()
+            row = conn.execute(
+                "SELECT * FROM conversations WHERE id = ?",
+                (conversation_id,),
+            ).fetchone()
             return dict(row) if row else None
+        finally:
+            conn.close()
+
+    def get_conversation_by_user(self, conversation_id: int, user_id: int) -> dict[str, Any] | None:
+        conn = self.db.get_conn()
+        try:
+            row = conn.execute(
+                "SELECT * FROM conversations WHERE id = ? AND user_id = ?",
+                (conversation_id, user_id),
+            ).fetchone()
+            return dict(row) if row else None
+        finally:
+            conn.close()
+
+    def update_conversation_title(self, conversation_id: int, title: str) -> None:
+        conn = self.db.get_conn()
+        try:
+            conn.execute(
+                "UPDATE conversations SET title = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                (title, conversation_id),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+    def delete_conversation(self, conversation_id: int) -> None:
+        conn = self.db.get_conn()
+        try:
+            conn.execute("DELETE FROM messages WHERE conversation_id = ?", (conversation_id,))
+            conn.execute("DELETE FROM conversations WHERE id = ?", (conversation_id,))
+            conn.commit()
         finally:
             conn.close()
 
@@ -67,7 +104,7 @@ class ChatRepository:
         conn = self.db.get_conn()
         try:
             conn.execute(
-                'UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+                "UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = ?",
                 (conversation_id,),
             )
             conn.commit()
@@ -78,11 +115,11 @@ class ChatRepository:
         conn = self.db.get_conn()
         try:
             cur = conn.execute(
-                'INSERT INTO messages(conversation_id, role, content) VALUES (?, ?, ?)',
+                "INSERT INTO messages(conversation_id, role, content) VALUES (?, ?, ?)",
                 (conversation_id, role, content),
             )
             conn.execute(
-                'UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+                "UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = ?",
                 (conversation_id,),
             )
             conn.commit()
@@ -94,17 +131,31 @@ class ChatRepository:
         conn = self.db.get_conn()
         try:
             rows = conn.execute(
-                'SELECT * FROM messages WHERE conversation_id = ? ORDER BY id ASC',
+                "SELECT * FROM messages WHERE conversation_id = ? ORDER BY id ASC",
                 (conversation_id,),
             ).fetchall()
             return [dict(r) for r in rows]
         finally:
             conn.close()
 
+    def get_message(self, message_id: int) -> dict[str, Any] | None:
+        conn = self.db.get_conn()
+        try:
+            row = conn.execute(
+                "SELECT * FROM messages WHERE id = ?",
+                (message_id,),
+            ).fetchone()
+            return dict(row) if row else None
+        finally:
+            conn.close()
+
     def update_message(self, message_id: int, content: str) -> None:
         conn = self.db.get_conn()
         try:
-            conn.execute('UPDATE messages SET content = ? WHERE id = ?', (content, message_id))
+            conn.execute(
+                "UPDATE messages SET content = ? WHERE id = ?",
+                (content, message_id),
+            )
             conn.commit()
         finally:
             conn.close()
@@ -112,7 +163,7 @@ class ChatRepository:
     def delete_message(self, message_id: int) -> None:
         conn = self.db.get_conn()
         try:
-            conn.execute('DELETE FROM messages WHERE id = ?', (message_id,))
+            conn.execute("DELETE FROM messages WHERE id = ?", (message_id,))
             conn.commit()
         finally:
             conn.close()
