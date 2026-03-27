@@ -167,3 +167,4 @@ class ChatRepository:
             conn.commit()
         finally:
             conn.close()
+    
